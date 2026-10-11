@@ -71,7 +71,14 @@
         </div>
     </InputRow>
 
-    <MaterialToggleSwitch label="settings.auto_updates" checked={$special.autoUpdates} on:change={(e) => updateSpecial(e.detail, "autoUpdates")} />
+    <MaterialToggleSwitch
+        label="settings.auto_updates"
+        checked={$special.autoUpdates}
+        on:change={(e) => {
+            updateSpecial(e.detail, "autoUpdates")
+            if (e.detail) sendMain(Main.AUTO_UPDATE)
+        }}
+    />
 </div>
 
 {#if !loading && !versionsMatch && latestVersion}
