@@ -23,6 +23,7 @@ import { history } from "../../helpers/history"
 import { getMediaStyle } from "../../helpers/media"
 import { getAllNormalOutputs, getFirstActiveOutput, setOutput } from "../../helpers/output"
 import { checkName } from "../../helpers/show"
+import { withKoreanBookSearch } from "./bookAbbreviation"
 
 const SCRIPTURE_API_URL = "https://api.churchapps.org/content/bibles"
 
@@ -77,6 +78,7 @@ export async function loadJsonBible(id: string): Promise<BibleInstance | null> {
 
     try {
         const instance = await JsonBible(localBible)
+        instance.bookSearch = withKoreanBookSearch(instance.bookSearch, localBible.books, instance.getDefaultBooks().ids)
         jsonBibleCache[id] = instance
         return instance
     } catch (err) {
