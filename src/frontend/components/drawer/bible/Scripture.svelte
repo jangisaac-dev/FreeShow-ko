@@ -9,6 +9,7 @@
     import { escapeRegExp, wait } from "../../../utils/common"
     import { translateText } from "../../../utils/language"
     import { getNormalizedKey } from "../../../utils/shortcuts"
+    import { expandKoreanBook } from "./bookAbbreviation"
     import { clone } from "../../helpers/array"
     import { brightenDarkColor, fadeColor } from "../../helpers/color"
     import { setDrawerTabData } from "../../helpers/historyHelpers"
@@ -686,7 +687,7 @@
         const bibleData = currentBibleData?.bibleData
         if (!bibleData) return null
 
-        const sanitizedValue = value?.replace(/\s+/g, " ").trim()
+        const sanitizedValue = expandKoreanBook(value?.replace(/\s+/g, " ").trim() || "", books || [])
         if (!sanitizedValue) return null
 
         const rawSegments = sanitizedValue

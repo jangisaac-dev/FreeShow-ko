@@ -1,7 +1,7 @@
 import JsonBible from "json-bible"
 import { getDefaultBooks } from "json-bible/lib/defaults"
 import { describe, expect, it } from "vitest"
-import { withKoreanBookSearch } from "./bookAbbreviation"
+import { expandKoreanBook, withKoreanBookSearch } from "./bookAbbreviation"
 
 const korean: { [number: number]: [string, string] } = { 1: ["창세기", "창"], 43: ["요한복음", "요"], 45: ["로마서", "롬"], 62: ["요한1서", "요일"] }
 const verses = [1, 2, 3].map((number) => ({ number, text: "-" }))
@@ -34,5 +34,21 @@ describe("withKoreanBookSearch", async () => {
     it("leaves other searches to json-bible", () => {
         expect(search("요")).toMatchObject({ autocompleted: "요" })
         expect(search("Exodus 2:1")).toMatchObject({ book: 2, chapter: 2, verses: [1] })
+    })
+
+    it("does not pick another book in a bible without all 66 books", async () => {
+        const newTestament = books.slice(39)
+        const nt = await JsonBible({ name: "nt", metadata: {}, books: newTestament } as any)
+        const ntSearch = withKoreanBookSearch(nt.bookSearch, newTestament, getDefaultBooks().ids)
+
+        expect(ntSearch("롬 2")).toMatchObject({ book: 45, chapter: 2 })
+        expect(ntSearch("요일 1:1").book).not.toBe(43)
+    })
+})
+
+describe("expandKoreanBook", () => {
+    it("writes the full book name for multi chapter references", () => {
+        expect(expandKoreanBook("요일 1:1;2:1", books)).toBe("요한1서 1:1;2:1")
+        expect(expandKoreanBook("Genesis 1:1;2:1", books)).toBe("Genesis 1:1;2:1")
     })
 })
