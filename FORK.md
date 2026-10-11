@@ -3,7 +3,7 @@
 [ChurchApps/FreeShow](https://github.com/ChurchApps/FreeShow)를 바탕으로 한 개인 포크입니다. 원본에 더한 기능은 세 가지입니다.
 
 1. 성경 약어 검색: `창 1`, `창 1:1-10`, `요일1:9`처럼 입력해도 찾습니다. 성경 파일의 `abbreviation` 값을 씁니다.
-2. 스테이지 화면 영상 싱크: 스테이지 레이아웃을 바꿨다가 돌아오면 영상이 처음부터가 아니라 현재 재생 위치 근처에서 다시 시작하고, 몇 초 안에 메인 출력과 0.1초 이내로 맞춰집니다. 일시정지 중에는 같은 프레임에 섭니다.
+2. 스테이지 화면 영상 싱크: 스테이지 레이아웃을 바꿨다가 돌아오면 영상이 처음부터가 아니라 현재 재생 위치 근처에서 다시 시작하고, 보통 3초 안에(스테이지 창이 2개면 최대 약 9초) 메인 출력과 0.1초 이내로 맞춰집니다. 일시정지 중에 바꾸면 메인 출력과 0.02초 이내의 같은 위치에 섭니다.
 3. 자동 업데이트: 이 저장소의 Releases에서 새 버전을 받습니다.
 
 ## Mac에 설치하기 (Mac마다 한 번)
@@ -23,7 +23,9 @@ git push fork HEAD:main
 bash scripts/fork/release-mac.sh
 ```
 
-버전은 `원본버전-ko.N`(예: `1.6.6-ko.1`)으로 자동으로 매겨집니다. 포크의 Actions 탭에서 워크플로를 켜지 마세요. 원본의 배포 워크플로가 함께 들어 있어서, 켜면 `main`에 푸시할 때마다 서명 없는 빌드가 이 저장소에 배포됩니다. 공증까지 하려면 한 번만 `xcrun notarytool store-credentials freeshow-notary`를 실행해 두고, 배포할 때 `APPLE_KEYCHAIN_PROFILE=freeshow-notary bash scripts/fork/release-mac.sh`로 실행합니다.
+스크립트는 릴리스를 초안(draft)으로 올립니다. 초안은 자동 업데이트에 잡히지 않습니다. 초안의 dmg를 받아 실행해 보고 문제가 없으면 스크립트가 마지막에 보여 주는 `gh release edit ... --draft=false --latest` 명령으로 공개합니다. 공개하는 순간 자동 업데이트를 켠 모든 Mac이 이 버전을 받습니다.
+
+버전은 `원본버전-ko.N`(예: `1.6.6-ko.1`)으로 자동으로 매겨집니다. 원본의 배포 워크플로(`release.yml`, `winget.yml`)는 원본 저장소에서만 돌도록 막아 두었습니다. 공증까지 하려면 한 번만 `xcrun notarytool store-credentials freeshow-notary`를 실행해 두고, 배포할 때 `APPLE_KEYCHAIN_PROFILE=freeshow-notary bash scripts/fork/release-mac.sh`로 실행합니다.
 
 ## 원본 FreeShow 업데이트 반영하기
 

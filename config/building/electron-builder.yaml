@@ -114,9 +114,9 @@ dmg:
           type: link
           path: /Applications
 
-# FreeShow-ko: releases (and auto updates) come from the fork
+# FreeShow-ko: releases (and auto updates) come from the fork, uploaded as a draft until it is tested and published
 publish:
     provider: github
     owner: jangisaac-dev
     repo: FreeShow-ko
-    releaseType: release
+    releaseType: draft

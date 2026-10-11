@@ -36,13 +36,14 @@ describe("withKoreanBookSearch", async () => {
         expect(search("Exodus 2:1")).toMatchObject({ book: 2, chapter: 2, verses: [1] })
     })
 
+    // json-bible can only find "요한1서" by its standard id, which needs all 66 books, so select nothing instead of 요한복음
     it("does not pick another book in a bible without all 66 books", async () => {
         const newTestament = books.slice(39)
         const nt = await JsonBible({ name: "nt", metadata: {}, books: newTestament } as any)
         const ntSearch = withKoreanBookSearch(nt.bookSearch, newTestament, getDefaultBooks().ids)
 
         expect(ntSearch("롬 2")).toMatchObject({ book: 45, chapter: 2 })
-        expect(ntSearch("요일 1:1").book).not.toBe(43)
+        expect(ntSearch("요일 1:1")).toMatchObject({ book: 0, chapter: 0, verses: [] })
     })
 })
 
