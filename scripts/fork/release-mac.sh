@@ -18,6 +18,8 @@ echo "Releasing FreeShow $version"
 
 rm -rf dist
 npm run build
+# create the draft first, otherwise the x64 and arm64 uploads race and each create their own draft
+gh release create "v$version" -R "$REPO" --draft --target main --title "$version" --notes ""
 GH_TOKEN=$(gh auth token) npx electron-builder --mac --config config/building/electron-builder.yaml -c.extraMetadata.version="$version" --publish always
 node scripts/cleanBuilds.js
 
