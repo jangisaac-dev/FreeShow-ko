@@ -113,3 +113,10 @@ dmg:
           y: 150
           type: link
           path: /Applications
+
+# FreeShow-ko: releases (and auto updates) come from the fork
+publish:
+    provider: github
+    owner: jangisaac-dev
+    repo: FreeShow-ko
+    releaseType: release
