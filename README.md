@@ -9,7 +9,7 @@
 </h1>
 
 <p align='center'>
-  FreeShow is a free software with a user-friendly interface that offers powerful features for creating and editing slideshows. 
+  FreeShow는 슬라이드쇼를 만들고 편집하는 강력한 기능을 쉬운 인터페이스로 제공하는 무료 소프트웨어입니다.
 </p>
 
 <p align='center'>
@@ -21,11 +21,11 @@
 </p>
 <br />
 
-## Get Started Using FreeShow
+## FreeShow 시작하기
 
 [![](https://markdown-videos.vercel.app/youtube/9_1lUNcrU1w)](https://youtu.be/9_1lUNcrU1w)
 
-## Preview
+## 미리보기
 
 <div style="display: flex;gap: 10px;">
     <img style="width: 49%;" src="https://github.com/ChurchApps/FreeShow/assets/1447203/0e5e832d-9bb8-4c64-98cc-04f0ce3f966e">
@@ -36,44 +36,44 @@
     <img style="width: 49%;" src="https://github.com/ChurchApps/FreeShow/assets/1447203/b1275bfc-e966-4813-962e-a7350ba6a84a">
 </div>
 
-## Short description
+## 소개
 
-FreeShow is a free and open-source presentation program that makes it easy to show text on a big screen. It supports stage display, remote control, media, and many other advanced features. It is open-sourced meaning anyone can contribute.
+FreeShow는 큰 화면에 텍스트를 쉽게 띄울 수 있는 무료 오픈소스 프레젠테이션 프로그램입니다. 스테이지 디스플레이와 원격 제어, 미디어를 비롯한 여러 고급 기능을 지원합니다. 소스가 공개되어 있어 누구나 개발에 참여할 수 있습니다.
 
-FreeShow exists because the creator found that other similar programs were either expensive or complex to use. He wanted to create a program that is easy to use and affordable for everyone, from small churches to large venues. FreeShow is now used by people all over the world.
+FreeShow를 만든 사람은 비슷한 프로그램이 비싸거나 쓰기 복잡하다는 것을 알고 이 프로그램을 만들었습니다. 작은 교회부터 큰 공연장까지 누구나 쉽고 부담 없이 쓸 수 있는 프로그램을 원했습니다. 지금은 전 세계 사람들이 FreeShow를 쓰고 있습니다.
 
-## Support Us
+## 후원하기
 
-The only reason this program is free is because of the generous support from users. If you want to support us to keep this free, please head over to [ChurchApps](https://churchapps.org/partner) or [sponsor us on GitHub](https://github.com/sponsors/ChurchApps/). Thank you so much!
+이 프로그램을 무료로 쓸 수 있는 것은 오로지 사용자들의 너그러운 후원 덕분입니다. 계속 무료로 남을 수 있도록 돕고 싶다면 [ChurchApps](https://churchapps.org/partner)를 방문하거나 [GitHub에서 후원](https://github.com/sponsors/ChurchApps/)해 주세요. 정말 감사합니다!
 
-## Join the Community
+## 커뮤니티 참여하기
 
-We have a great community for end-users on [Facebook](https://www.facebook.com/groups/freeshowapp). It's a good way to ask questions, get tips and follow new updates. Come join us!
+[Facebook](https://www.facebook.com/groups/freeshowapp)에 좋은 사용자 커뮤니티가 있습니다. 궁금한 점을 묻고 팁을 얻으며 새 업데이트 소식을 받아 보기 좋은 곳입니다. 함께해 주세요!
 
-## Report an issue or request a feature
+## 문제 보고 및 기능 요청
 
-If you notice a bug, or need a feature. Please create an [issue on GitHub](https://github.com/ChurchApps/freeshow/issues).
+버그를 발견했거나 필요한 기능이 있으면 [GitHub 이슈](https://github.com/ChurchApps/freeshow/issues)를 등록해 주세요.
 
-## Give feedback
+## 피드백 보내기
 
-Feedback is welcome! Please [open a discussion here](https://github.com/orgs/ChurchApps/discussions/categories/freeshow) or send a mail to [dev@freeshow.app](mailto:dev@freeshow.app).
+피드백은 언제든 환영합니다! [여기에서 토론을 시작](https://github.com/orgs/ChurchApps/discussions/categories/freeshow)하거나 [dev@freeshow.app](mailto:dev@freeshow.app)으로 메일을 보내 주세요.
 
-## Help translate
+## 번역 참여하기
 
-Head over to [FreeShow on Transifex](https://app.transifex.com/nettbiter/freeshow/) to request a language.
+새 언어는 [Transifex의 FreeShow](https://app.transifex.com/nettbiter/freeshow/) 페이지에서 요청할 수 있습니다.
 
-## Help the development
+## 개발 참여하기
 
-You are welcome to contribute to the code!
+코드 기여도 환영합니다!
 
-1. Clone the code in this repo
-2. Install [Node.js](https://nodejs.org/en/download/)
-3. Install [Python 3.12](https://www.python.org/downloads/), and the [`setuptools`](https://pypi.org/project/setuptools/) package
-4. On Windows, download [Visual Studio](https://visualstudio.microsoft.com/downloads/) and install "Desktop development with C++", also select the "Windows 10 SDK"
-5. On Linux, install the following library: `sudo apt-get install libfontconfig1-dev`
-6. In the terminal, run: `npm install`
-7. To start the app, run: `npm start`
+1. 이 저장소의 코드를 클론합니다
+2. [Node.js](https://nodejs.org/en/download/)를 설치합니다
+3. [Python 3.12](https://www.python.org/downloads/) 및 [`setuptools`](https://pypi.org/project/setuptools/) 패키지를 설치합니다
+4. Windows에서는 [Visual Studio](https://visualstudio.microsoft.com/downloads/)를 다운로드하여 "Desktop development with C++"(C++를 사용한 데스크톱 개발)를 설치하고 "Windows 10 SDK"도 함께 선택합니다
+5. Linux에서는 다음 라이브러리를 설치합니다: `sudo apt-get install libfontconfig1-dev`
+6. 터미널에서 `npm install`을 실행합니다
+7. 앱을 시작하려면 `npm start`를 실행합니다
 
-## Join us on Slack
+## Slack에서 함께하기
 
-If you would like to get involved contributing in any way, head over to our [Slack Channel](https://join.slack.com/t/livechurchsolutions/shared_invite/zt-i88etpo5-ZZhYsQwQLVclW12DKtVflg) and introduce yourself. We'd love to hear from you.
+어떤 방식으로든 참여하고 싶다면 [Slack 채널](https://join.slack.com/t/livechurchsolutions/shared_invite/zt-i88etpo5-ZZhYsQwQLVclW12DKtVflg)에 들러 자기소개를 남겨 주세요. 여러분의 이야기를 기다리겠습니다.
