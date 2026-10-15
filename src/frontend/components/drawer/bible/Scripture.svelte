@@ -594,31 +594,19 @@
     $: if (searchValue.length) referenceSearch()
 
     let selectAllTimeout: NodeJS.Timeout | null = null
-    let freezeTimeout: NodeJS.Timeout | null = null
-    let freezeInput: string | null = null
 
+    // the search box is left exactly as typed (no autocomplete), so a Korean input method is never overwritten while composing
     let currentSearchId = 0
     async function referenceSearch() {
         const searchId = ++currentSearchId
 
         if (selectAllTimeout) clearTimeout(selectAllTimeout)
 
-        // if search value ends with any number, unfreeze
-        if (/\d$/.test(searchValue) || searchValue.length < (freezeInput?.length || 0)) {
-            if (freezeTimeout) clearTimeout(freezeTimeout)
-            freezeInput = null
-        } else if (freezeInput) {
-            searchValue = freezeInput
-            return
-        }
-
         const multiReference = await parseMultiChapterReference(searchValue)
 
         if (searchId !== currentSearchId) return
 
         if (multiReference) {
-            // normalize the search box so it reflects the exact selection the user will get
-            searchValue = multiReference.referenceLabel
             await openBook(multiReference.bookNumber, multiReference.chapters, multiReference.verses)
             return
         }
@@ -638,9 +626,6 @@
             }
         }
 
-        const autocompleteChanged = result.autocompleted && result.autocompleted !== searchValue
-        if (result.autocompleted) searchValue = result.autocompleted
-
         const bookChanged = result.book && result.book.toString() !== activeReference.book?.toString()
         const chapterChanged = result.chapter && (!activeReference.chapters.length || result.chapter.toString() !== activeReference.chapters[0]?.toString())
 
@@ -651,16 +636,7 @@
 
         let success = true
         if (bookChanged) {
-            // prevent inputs right after auto complete
-            if (!result.chapter) {
-                freezeInput = searchValue
-                freezeTimeout = setTimeout(() => (freezeInput = null), 1500)
-            }
             success = await openBook(result.book, result.chapter ? [result.chapter] : undefined, newVerses)
-        } else if (autocompleteChanged && !result.chapter) {
-            // prevent inputs right after auto complete to already opened book
-            freezeInput = searchValue
-            freezeTimeout = setTimeout(() => (freezeInput = null), 1500)
         } else if (chapterChanged) {
             success = await openChapter([result.chapter], newVerses)
         } else if (result.chapter) {
@@ -677,7 +653,6 @@
 
     type MultiReference = {
         bookNumber: number
-        referenceLabel: string
         chapters: (number | string)[]
         verses: (number | string)[][]
     }
@@ -734,7 +709,6 @@
 
         return {
             bookNumber,
-            referenceLabel: buildReferenceLabel(canonicalBookName, resolvedSegments),
             chapters,
             verses
         }
@@ -799,17 +773,6 @@
             console.error(err)
             return []
         }
-    }
-
-    // Format the combined reference so the UI shows "Book 1:1-12 ; 2:1-10".
-    function buildReferenceLabel(bookName: string, segments: string[]) {
-        const escapedBook = escapeRegExp(bookName)
-        const bookRegex = new RegExp(`^${escapedBook}\\s*`, "i")
-        const [firstSegment, ...rest] = segments
-        const firstLabel = firstSegment.replace(bookRegex, "").trim() || firstSegment
-        const restLabels = rest.map((segment) => segment.replace(bookRegex, "").trim())
-        const suffix = restLabels.length ? restLabels.map((label) => ` ; ${label}`).join("") : ""
-        return `${bookName} ${firstLabel}${suffix}`.trim()
     }
 
     let contentSearchFieldActive = false
