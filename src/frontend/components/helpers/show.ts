@@ -15,17 +15,19 @@ export function checkName(name = "", showId = "") {
     if (!name || typeof name !== "string") name = translateText("main.unnamed")
     name = formatToFileName(name)
 
-    // if ID exists, check the name if different
-    if (showId && get(shows)[showId]) {
-        if (get(shows)[showId]?.name !== name) return checkName(name)
-        return name
-    }
+    const showsList = Object.entries(get(shows) || {})
+
+    // strip trailing space + digits from the name if it exists, so "x 2" becomes "x", and then likely "x 3" instead of "x 2 2"
+    const hasConflict = showsList.some(([id, a]) => (!showId || id !== showId) && a.name?.toLowerCase() === name.toLowerCase())
+    if (hasConflict) name = name.replace(/\s+\d+$/, "")
+
+    const nameLower = name.toLowerCase()
 
     let number = 1
-    while (Object.values(get(shows)).find((a) => a.name?.toLowerCase() === (number > 1 ? name.toLowerCase() + " " + number : name.toLowerCase()))) number++
+    while (showsList.find(([id, a]) => (!showId || id !== showId) && a.name?.toLowerCase() === (number > 1 ? `${nameLower} ${number}` : nameLower))) number++
 
     // add number if existing name, and trim away spaces from the start/end
-    return (number > 1 ? name + " " + number : name).trim()
+    return (number > 1 ? `${name} ${number}` : name).trim()
 }
 
 export function formatToFileName(name = "") {

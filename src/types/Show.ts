@@ -111,10 +111,8 @@ export interface Item {
     id?: string
     lines?: Line[]
     list?: List
-    auto?: boolean // DEPRECATED - use textFit
     textFit?: AutosizeTypes // auto size text fix option (default: shrinkToFit)
     autoFontSize?: number // only used to store the calculated auto size text size
-    previewAutoFontSize?: number // only used to store the calculated auto size text size for the preview
     style: string
     align?: string
     specialStyle?: any // line gap && line background
@@ -138,7 +136,10 @@ export interface Item {
     blend?: string
     muted?: boolean // media item
     loop?: boolean // media item
+    volume?: number // media item
     speed?: number // media item
+    fromTime?: number // media item
+    toTime?: number // media item
     variable?: any
     web?: any
     qr_code?: { text?: string; color?: string; background?: string }

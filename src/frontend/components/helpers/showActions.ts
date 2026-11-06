@@ -61,7 +61,7 @@ import {
     variables
 } from "./../../stores"
 import { clone, keysToID, sortByName } from "./array"
-import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, removeExtension } from "./media"
+import { downloadOnlineMedia, encodeFilePath, getExtension, getFileName, getMedia, getMediaStyle, getMediaType, locateMediaFile, removeExtension } from "./media"
 import { defaultLayers, getActiveOutputs, getAllActiveOutputIds, getAllNormalOutputs, getAllStageOutputs, getFirstActiveOutput, getFirstOutput, getWindowOutputId, isOutCleared, refreshOut, resolveOutputId, resolveOutputIds, setOutput, startFolderTimer } from "./output"
 import { OutputHelper } from "./OutputHelper"
 import { getSetChars } from "./randomValue"
@@ -240,17 +240,24 @@ export function checkActionTrigger(layoutData: SlideData, slideIndex = 0) {
     })
 }
 
-export async function playPdf(data: OutSlide | null, next: boolean, loop = false) {
+export async function playPdf(data: OutSlide | null, next: boolean, loop = false, page?: number) {
     if (!data?.id || data?.type !== "pdf") return
 
+    const located = await locateMediaFile(data.id)
+    const targetId = located?.path || data.id
+
     GlobalWorkerOptions.workerSrc = "./assets/pdf.worker.min.mjs"
-    const loadingTask = getDocument(encodeFilePath(data.id))
+    const loadingTask = getDocument(encodeFilePath(targetId))
     const pdfDoc = await loadingTask.promise
     const pages = pdfDoc.numPages
 
-    let nextPage = data.page
-    if (nextPage === undefined) nextPage = next ? -1 : pages
-    nextPage += next ? 1 : -1
+    let nextPage: number
+    if (page !== undefined) {
+        nextPage = page
+    } else {
+        const currentPage = data.page !== undefined ? data.page : next ? -1 : pages
+        nextPage = currentPage + (next ? 1 : -1)
+    }
 
     if (nextPage > pages - 1) {
         if (!loop) return
@@ -258,13 +265,13 @@ export async function playPdf(data: OutSlide | null, next: boolean, loop = false
     }
 
     const projectItem = get(projects)[get(activeProject) || ""]?.shows?.[get(activeShow)?.index || 0]
-    const name = data?.name || projectItem?.name
+    const name = data?.name || projectItem?.name || removeExtension(getFileName(targetId))
 
-    setOutput("slide", { type: "pdf", id: data.id, page: nextPage, pages, name })
+    setOutput("slide", { type: "pdf", id: targetId, page: nextPage, pages, name })
     clearBackground()
 
     const timer = projectItem?.data?.timer || 0
-    if (timer) startFolderTimer(data.id, { type: "pdf", path: "" })
+    if (timer) startFolderTimer(targetId, { type: "pdf", path: "" })
 }
 
 // go to random slide in current project
@@ -754,7 +761,7 @@ export function sendMidi(data: any) {
 
 // DYNAMIC VALUES
 
-const commonOnly = ["time_str", "project_section_notes", "project_section_time", "show_name_next", "show_text_full", "slide_group_text", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "exif_", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
+const commonOnly = ["time_str", "project_section_notes", "project_section_time", "project_item_number", "project_items_count", "show_name_next", "show_text_full", "slide_group_text", "slide_text_", "layout_notes", "slide_group_upcoming", "slide_notes_next", "exif_", "audio_subtitle", "audio_genre", "audio_year", "audio_volume"]
 const deprecatedDynamicValues = ["show_name_next", "project_section_next", "project_section_time_next", "slide_group_next", "slide_group_next_color", "slide_notes_next", "slide_text_previous", "slide_text_current", "slide_text_next"]
 
 function insertOffsetVariants(idList: string[]): string[] {
@@ -1203,6 +1210,20 @@ const dynamicValues = {
         const projectTime = getActiveProjectSection({}, 1 + offset)?.data?.time
         return projectTime ? joinTimeBig(getTimeUntilClock(getActiveProjectSection({}, 1 + offset)?.data?.time)) : "00:00"
     },
+    project_item_number: ({ projectRef }) => {
+        // get outputted index
+        let index = projectRef?.index ?? -1
+        if (index < 0) {
+            // get any opened index
+            const activeItem = get(focusMode) ? get(activeFocus) : get(activeShow)
+            if (typeof activeItem?.index === "number" && activeItem.index >= 0) index = activeItem.index
+        }
+        return (Number(index ?? -1) + 1).toString()
+    },
+    project_items_count: ({ projectRef }) => {
+        const projectItems = get(projects)[projectRef?.id || ""]?.shows || []
+        return projectItems.length
+    },
 
     // show
     show_name: ({ show, projectRef, offset }) => {
@@ -1224,7 +1245,7 @@ const dynamicValues = {
     layout_slides: ({ ref }) => ref.length,
     layout_notes: ({ layout }) => layout.notes || "",
 
-    slide_number: ({ slideIndex, offset }) => (Number(slideIndex ?? -1) + 1 + offset).toString(),
+    slide_number: ({ slideIndex }) => (Number(slideIndex ?? -1) + 1).toString(),
     slide_group: ({ show, ref, slideIndex, outSlide, offset }) => {
         const idx = slideIndex + offset
         const parentIndex = ref[idx]?.parent?.layoutIndex ?? idx

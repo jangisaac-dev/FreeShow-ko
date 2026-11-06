@@ -233,13 +233,26 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
         }
 
         let toggleState = false
-        outs.forEach((id: string, i: number) => {
+        let toggleStateSet = false
+        outs.forEach((id: string) => {
             const output = a[id]
             if (!output) return
 
             if (!output.out) a[id].out = {}
             if (!output.out?.[type]) a[id].out![type] = type === "overlays" || type === "effects" ? [] : null
             data = clone(inputData)
+
+            // effects bound to specific outputs
+            if (type === "effects" && data) {
+                const wasArray = Array.isArray(data)
+                const effectIds: string[] = wasArray ? data : [data]
+                const allowedIds = effectIds.filter((effectId) => {
+                    const effectBindings = get(effects)[effectId]?.bindings || []
+                    return !effectBindings.length || isOutputBound(effectBindings, id)
+                })
+                if (effectIds.length && !allowedIds.length) return
+                data = wasArray ? allowedIds : allowedIds[0]
+            }
 
             if (type === "slide" && data === null && output.out?.slide?.type === "ppt") {
                 sendMain(Main.PRESENTATION_CONTROL, { action: "stop" })
@@ -256,7 +269,10 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
             let outData = a[id].out?.[type] || null
             if ((type === "overlays" || type === "effects") && data?.length) {
                 if (!Array.isArray(data)) data = [data]
-                if (toggle && i === 0) toggleState = outData?.includes(data[0])
+                if (toggle && !toggleStateSet) {
+                    toggleState = outData?.includes(data[0])
+                    toggleStateSet = true
+                }
                 if (toggle && toggleState) outData.splice(outData.indexOf(data[0]), 1)
                 else if (toggle || add) outData = removeDuplicates([...(a[id].out?.[type] || []), ...data])
                 else outData = data
@@ -276,6 +292,16 @@ export function setOutput(type: string, data: any, toggle = false, outputId = ""
 
                 if (type === "overlays" || type === "effects") {
                     clearOverlayTimers(id)
+                }
+            }
+
+            if (type === "slide") {
+                const previousSlide = a[id].out?.slide || null
+                const isTempSlide = outData?.id === "temp" || outData?.id === "tempText"
+                const sameSlideOutput = !!previousSlide && !!outData && !isTempSlide && previousSlide.id === outData.id && previousSlide.layout === outData.layout && previousSlide.index === outData.index && previousSlide.page === outData.page && previousSlide.type === outData.type
+
+                if (sameSlideOutput) {
+                    a[id].out!.refresh = Number(a[id].out!.refresh || 0) + 1
                 }
             }
 
@@ -357,7 +383,7 @@ function checkAudio(type: string, data: any, allOutputIds: string[], outs: strin
 
         // start new video items
         newItems.forEach((item: any) => {
-            VideoPlayer.start(item.src, { loop: item.loop !== false, muted: item.muted, startAt: item.startAt || 0, type: "item" }, allOutputIds)
+            VideoPlayer.start(item.src, { loop: item.loop !== false, muted: item.muted, startAt: item.startAt || item.fromTime || 0, fromTime: item.fromTime, toTime: item.toTime, volume: item.volume, type: "item" }, allOutputIds)
         })
     }
 }
@@ -712,8 +738,9 @@ export function getFirstOutputIdWithBackground(outputIds: string[] = [], _update
 }
 
 // used for checking if style template should be used as slide preview - only if all outputs have it
-export function allOutputsHasStyleTemplate(isScripture: boolean = false) {
+export function allOutputsHasStyleTemplate(isScripture: boolean = false, _updater: any = null) {
     const outputs = getAllNormalOutputs()
+    if (!outputs.length) return false
     return outputs.every((output) => {
         const style = output.style ? get(styles)[output.style] || null : null
         const template = style?.[isScripture ? "templateScripture" : "template"]
@@ -721,20 +748,14 @@ export function allOutputsHasStyleTemplate(isScripture: boolean = false) {
     })
 }
 
-export function refreshOut(refresh = true) {
+export function refreshOut() {
     outputs.update((a) => {
         getAllActiveOutputs().forEach(({ id }) => {
             if (!a[id]) return
-            a[id].out = { ...a[id].out, refresh }
+            a[id].out = { ...a[id].out, refresh: Number(a[id].out?.refresh || 0) + 1 }
         })
         return a
     })
-
-    if (refresh) {
-        setTimeout(() => {
-            refreshOut(false)
-        }, 100)
-    }
 }
 
 // outputs is just for updates
@@ -749,7 +770,7 @@ export function isOutCleared(key: string | null = null, updater: Outputs = get(o
         const keys: string[] = key ? [key] : Object.keys(output.out || {})
         cleared = !keys.some((type: string) => {
             if (!output.out?.[type]) return
-            if (key === null && type === "scene") return false
+            if (key === null && (type === "scene" || type === "refresh")) return false
 
             if (type === "overlays") {
                 if (!Array.isArray(output.out.overlays)) return false
@@ -1004,6 +1025,7 @@ export function updateOutputWebrtcData(outputId: string, key: string, value: any
     if (!output) return null
 
     const newData = { ...(output.webrtcData || {}), [key]: value }
+    if (key === "streaming") newData.startedAt = value ? Date.now() : undefined
 
     if (key === "streaming" && (!output.webrtc || !output.webrtcData?.url)) return null
 
@@ -1044,6 +1066,9 @@ export function updateOutputRtmpData(outputId: string, key: string, value: any) 
     if (!output) return null
 
     const newData = { ...(output.rtmpData || {}), [key]: value }
+    if (key === "streaming") {
+        newData.startedAt = value ? Date.now() : undefined
+    }
 
     if (key === "streaming" && (!output.rtmp || !hasStreamableDestination(newData))) return null
 
@@ -1390,6 +1415,8 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
 
     // reduce template textboxes to slide items
     const slideTextboxes = hasScriptureDynamicValue ? 0 : slideItems.reduce((count, a) => (count += (a?.type || "text") === "text" ? 1 : 0), 0)
+    // if template textboxes (without dynamic values) count matches all slide textboxes (with or without dynamic values), merge as normal textboxes
+    const mergeDynamicAsText = !hasScriptureDynamicValue && slideTextboxes > 0 && (sorted.text?.length || 0) === slideTextboxes
     if (!templateClicked && slideTextboxes < (sortedTemplateItems.text?.length || 0)) {
         sortedTemplateItems.text = sortedTemplateItems.text.slice(0, slideTextboxes)
     }
@@ -1406,7 +1433,7 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         let type: string = item.type || "text"
         if (type === "text" && hasScriptureDynamicValue) return
 
-        if (hasDynamicValue(item)) type = "text_dynamic"
+        if (hasDynamicValue(item) && !mergeDynamicAsText) type = "text_dynamic"
 
         const templateItem = clone(sortedTemplateItems[type]?.shift())
         if (!templateItem) return finish()
@@ -1421,23 +1448,9 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
         if (mode === "item") return finish()
 
         if (resetAutoSize) delete item.autoFontSize
-
-        // Handle auto and textFit properties
-        if (templateItem.auto !== undefined) {
-            // Template explicitly defines auto
-            item.auto = templateItem.auto
-        } else if (templateItem.textFit) {
-            // Template has textFit but not auto - enable auto (textFit implies auto-sizing)
-            if (templateItem.textFit !== "none") item.auto = true
-        } else if (templateItem.auto === undefined && templateItem.textFit === undefined) {
-            // Template defines neither - disable auto-sizing (simple static template)
-            item.auto = false
-            delete item.textFit
-        }
-
-        // Apply textFit if template defines it
         if (templateItem.textFit) item.textFit = templateItem.textFit
-        else if (!templateItem.auto) delete item.textFit
+        else delete item.textFit
+
         if (templateItem.list) item.list = templateItem.list
         else delete item.list
 
@@ -1548,7 +1561,6 @@ export function mergeWithTemplate(slideItems: Item[], templateItems: Item[], add
             !newSlideItems.find((a) => {
                 const currentItem = clone(a)
                 delete currentItem.align
-                delete currentItem.auto
                 delete currentItem.autoFontSize
                 delete currentItem.fromTemplate
 
@@ -1880,7 +1892,9 @@ export function getStyleTemplate(outSlide: OutSlide | null, currentStyle: Styles
 }
 
 function itemHasAutoSize(item: Item) {
-    return (item.textFit || "none") !== "none" || !!item.auto
+    const hasAutoSize = (item.textFit || "none") !== "none"
+    if (hasAutoSize && (item.type || "text") === "text" && !getItemText(item).length) return false
+    return hasAutoSize
 }
 
 export function slideHasAutoSizeItem(slide: Slide | Template) {
