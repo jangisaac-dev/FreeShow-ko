@@ -20,6 +20,7 @@ import { addItem, DEFAULT_ITEM_STYLE } from "../edit/scripts/itemHelpers"
 import { addStageItem } from "../stage/stage"
 import { clone, removeDuplicates } from "./array"
 import { projectDropFolders } from "./drop"
+import { appendShowSlides } from "./clipboard"
 import { history, historyAwait } from "./history"
 import { downloadOnlineMedia, getExtension, getFileName, getMediaLayerType, getMediaStyle, getMediaType, removeExtension } from "./media"
 import { addToPos, getIndexes, mover } from "./mover"
@@ -628,6 +629,12 @@ const files = {
 }
 
 const slideDrop = {
+    show_drawer: async ({ drag, drop }: Data) => {
+        await appendShowSlides(
+            drag.data.map(({ id }) => id),
+            drop.index
+        )
+    },
     media: async ({ drag, drop }: Data, h: History, keys: Keys) => {
         let data = clone(drag.data)
         if (!data.length) return

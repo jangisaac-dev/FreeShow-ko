@@ -412,6 +412,7 @@ function handleSlides(obj, data, initializing) {
             layouts: clone(_show(showId).get("layouts")),
             media: clone(_show(showId).get("media"))
         }
+        if (data.previousMedia !== undefined) _show(showId).set({ key: "media", value: clone(data.previousMedia) })
     }
 
     if (!slides[0]) return

@@ -11,6 +11,7 @@ import {
     actions,
     activeDays,
     activeDrawerTab,
+    activeFocus,
     activePage,
     activePopup,
     activeProject,
@@ -30,6 +31,7 @@ import {
     effects,
     events,
     focusedArea,
+    focusMode,
     folders,
     interactions,
     media,
@@ -63,6 +65,7 @@ import {
 import { newToast, setStatus, triggerFunction } from "../../utils/common"
 import { translateText } from "../../utils/language"
 import { confirmCustom } from "../../utils/popup"
+import { getAccess } from "../../utils/profile"
 import { copyFromTextField, cutFromTextField, isFormField } from "../../utils/shortcutsHelper"
 import { removeSlide } from "../context/menuClick"
 import { deleteTimer } from "../drawer/timers/timers"
@@ -121,6 +124,52 @@ export function copy(clip: Clipboard | null = null, getData = true, shouldDuplic
     console.info("CLIPBOARD:", get(clipboard))
 
     return copyObj
+}
+
+export async function appendShowSlides(showIds: string[], index?: number) {
+    const targetId = get(activeShow)?.id
+    const targetLayout = _show(targetId).get("settings.activeLayout")
+    const focusId = get(focusMode) ? get(activeFocus).id : null
+    if (!targetId || !targetLayout || (focusId && focusId !== targetId)) return
+
+    await loadShows(showIds)
+    // Loading a show can finish after the user changes the target, focus, or access.
+    if (get(activeShow)?.id !== targetId || _show(targetId).get("settings.activeLayout") !== targetLayout || _show(targetId).get("locked")) return
+    if (focusId !== (get(focusMode) ? get(activeFocus).id : null)) return
+    const profile = getAccess("shows")
+    if (profile.global === "read" || profile[_show(targetId).get("category") || ""] === "read") return
+
+    const data: { slides: any[]; layouts: any[]; media: Record<string, any> } = { slides: [], layouts: [], media: {} }
+    showIds.forEach((showId) => {
+        const source = get(showsCache)[showId]
+        if (!source) return
+        const ref = getLayoutRef(showId).filter((slide) => slide.id !== "fake_empty")
+        if (!ref.length) return
+        const copied = copyActions.slide(
+            ref.map((slide) => ({ id: slide.id, index: slide.layoutIndex })),
+            false,
+            showId
+        )
+        const slideIds = Object.fromEntries(copied.slides.map((slide) => [slide.id, uid()]))
+        const mediaIds = Object.fromEntries(Object.keys(copied.media).map((id) => [id, uid()]))
+
+        copied.slides.forEach((slide) => {
+            slide.id = slideIds[slide.id]
+            if (slide.children) slide.children = slide.children.map((id) => slideIds[id]).filter(Boolean)
+        })
+        const remapMedia = (layout: any) => {
+            if (mediaIds[layout.background]) layout.background = mediaIds[layout.background]
+            if (layout.audio) layout.audio = layout.audio.map((id) => mediaIds[id] || id)
+            Object.values(layout.children || {}).forEach(remapMedia)
+        }
+        copied.layouts.forEach(remapMedia)
+        Object.entries(copied.media).forEach(([id, value]) => (data.media[mediaIds[id]] = clone(value)))
+        data.slides.push(...copied.slides)
+        data.layouts.push(...copied.layouts)
+    })
+    if (!data.slides.length) return
+
+    pasteActions.slide(data, { index: index === undefined ? undefined : index - 1, previousMedia: clone(_show(targetId).get("media") || {}), preserveTemplate: true })
 }
 
 // pasting text in editbox is it's own function
@@ -458,8 +507,8 @@ const copyActions = {
         items = items.filter((_a, i) => data.items?.includes(i))
         return [...items]
     },
-    slide: (data: any, fullGroup = false) => {
-        const ref = getLayoutRef()
+    slide: (data: any, fullGroup = false, showId = "active") => {
+        const ref = getLayoutRef(showId)
         const layouts: any[] = []
         const mediaData: any = {}
 
@@ -475,7 +524,7 @@ const copyActions = {
                 if (!ref[a.index]) return ""
 
                 // get layout
-                if (a.index !== undefined) layouts.push(ref[a.index].data)
+                if (a.index !== undefined) layouts.push(clone(ref[a.index].data))
 
                 return a.id || (a.index !== undefined ? ref[a.index].id : "")
             })
@@ -483,7 +532,7 @@ const copyActions = {
 
         if (fullGroup) {
             // select all children of group
-            const allSlides = _show().get("slides")
+            const allSlides = _show(showId).get("slides")
             const newIds: string[] = []
             ids.forEach((id: string) => {
                 const children = allSlides[id]?.children || []
@@ -492,7 +541,7 @@ const copyActions = {
             ids = removeDuplicates(newIds)
         }
 
-        let slides = clone(_show().slides(ids).get())
+        let slides = clone(_show(showId).slides(ids).get())
         slides = slides.map((slide) => {
             if (slide.group !== null) return slide
 
@@ -511,7 +560,7 @@ const copyActions = {
         })
 
         const layoutMedia = layouts.filter((a) => a.background || a.audio?.length)
-        const showMedia = _show().get()?.media || {}
+        const showMedia = _show(showId).get()?.media || {}
         layoutMedia.forEach((layoutData) => {
             const mediaIds: string[] = []
             if (layoutData.background) mediaIds.push(layoutData.background)
@@ -600,7 +649,7 @@ const pasteActions = {
         const items = data.map((item) => clone(item))
         history({ id: "UPDATE", newData: { data: items, key: "slides", keys: [ref.id], subkey: "items", index: -1 }, oldData: { id: get(activeShow)!.id }, location: { page: "edit", id: "show_key" } })
     },
-    slide: (data: any, { index }: any = {}, isDuplicating: boolean = false) => {
+    slide: (data: any, { index, previousMedia, preserveTemplate = false }: any = {}, isDuplicating: boolean = false) => {
         if (!data?.slides) return
 
         data = clone(data)
@@ -635,11 +684,11 @@ const pasteActions = {
         })
 
         const showId = get(activeShow)?.id || ""
-        if (!Object.keys(get(showsCache)[showId]?.slides || {}).length) {
+        if (!preserveTemplate && !Object.keys(get(showsCache)[showId]?.slides || {}).length) {
             removeTemplatesFromShow(showId)
         }
 
-        history({ id: "SLIDES", newData: { data: newSlides, layouts, media: data.media, index: index !== undefined ? index + 1 : undefined } })
+        history({ id: "SLIDES", newData: { data: newSlides, layouts, media: data.media, ...(previousMedia !== undefined ? { previousMedia } : {}), index: index !== undefined ? index + 1 : undefined } })
     },
     group: (data: any, extraData: any = {}, isDuplicating: boolean = false) => pasteActions.slide(data, extraData, isDuplicating),
     overlay: (data: any) => pasteDrawerItem(data, "overlay"),

@@ -15,7 +15,7 @@ export type DropAreas = "all_slides" | "slides" | "slide" | "edit" | "shows" | "
 
 const areas = {
     all_slides: ["template"],
-    slides: ["media", "player", "urls", "audio", "audio_effect", "overlay", "sound", "effect", "screen", "ndi", "camera", "microphone", "scripture", "category_audio", "audio_stream", "metronome", "show", "global_timer", "variable", "midi", "action", "omt", "blackmagic", "scene"], // group
+    slides: ["show_drawer", "media", "player", "urls", "audio", "audio_effect", "overlay", "sound", "effect", "screen", "ndi", "camera", "microphone", "scripture", "category_audio", "audio_stream", "metronome", "show", "global_timer", "variable", "midi", "action", "omt", "blackmagic", "scene"], // group
     // slide: ["overlay", "sound", "camera"], // "media",
     // projects: ["folder"],
     project: ["show_drawer", "media", "audio", "audio_effect", "overlay", "player", "scripture", "effect", "screen", "ndi", "camera", "omt", "blackmagic"],
@@ -28,7 +28,7 @@ const areas = {
 const areaChildren = {
     projects: ["folder", "project"],
     project: ["show", "media", "audio", "audio_effect", "show_drawer", "player", "action"],
-    slides: ["slide", "group", "global_group", "effect", "screen", "ndi", "camera", "microphone", "media", "player", "urls", "audio", "audio_effect", "show", "omt", "blackmagic"],
+    slides: ["show_drawer", "slide", "group", "global_group", "effect", "screen", "ndi", "camera", "microphone", "media", "player", "urls", "audio", "audio_effect", "show", "omt", "blackmagic"],
     all_slides: [],
     navigation: ["show", "show_drawer", "media", "audio", "audio_effect", "overlay", "template"],
     audio_playlist: ["audio"],
