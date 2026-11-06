@@ -8,6 +8,7 @@ artifactName: FreeShow-${version}-${arch}.${ext}
 #     mirror: https://github.com/castlabs/electron-releases/releases/download/
 
 files:
+    - LICENSE
     - build/electron/**
     - build/types/**
     - public/**
@@ -32,6 +33,10 @@ win:
     target: NSIS
     icon: build/public/icon.png
     files:
+        - LICENSE
+        - build/electron/**
+        - build/types/**
+        - public/**
         - "!**/node_modules/openmediatransport/lib/{macos,linux-*,win-arm64}/**"
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"
@@ -48,6 +53,10 @@ win:
 
 linux:
     files:
+        - LICENSE
+        - build/electron/**
+        - build/types/**
+        - public/**
         - "!**/node_modules/openmediatransport/lib/{macos,win-*}/**"
     asarUnpack:
         - "**/node_modules/grandiose/**"
@@ -75,6 +84,10 @@ deb:
 mac:
     icon: build/public/icon.png
     files:
+        - LICENSE
+        - build/electron/**
+        - build/types/**
+        - public/**
         - "!**/node_modules/openmediatransport/lib/{linux-*,win-*}/**"
     asarUnpack:
         - "**/node_modules/macadam/**/*.node"

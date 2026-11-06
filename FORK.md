@@ -100,6 +100,7 @@ git diff --stat origin/main...HEAD
 
 - 바꾼 곳:
     - `config/building/electron-builder.yaml`: 빌드를 FreeShow-ko 저장소에 초안으로 올립니다.
+    - `scripts/macos/packageFiles.test.js`와 각 플랫폼의 `files` 목록: 런타임 파일과 `LICENSE`만 포장하도록 지정합니다. 플랫폼별 제외 규칙만 있으면 프로젝트 전체가 포함되는 기본 동작을 막아 개인 handoff와 `test-output` 백업을 제외합니다. 원본 업데이트 때 플랫폼별 포함 목록을 유지하고 `node scripts/macos/packageFiles.test.js`로 확인합니다.
     - `scripts/fork/release-mac.sh`: 포크 배포 스크립트입니다.
     - `scripts/macos/notarize.js`: 키체인 프로필로 공증하고, 자격 증명이 없으면 공증을 건너뜁니다.
     - `scripts/macos/prepareOpus.js`, `prepareOpus.test.js`와 빌드 설정의 `afterExtract`: 다중 아키텍처 캐시에서 Opus의 Electron용 바이너리가 빠지는 문제를 막습니다. 네이티브 재빌드 뒤 대상 아키텍처의 Node용 바이너리를 검증해 Electron 경로로 복사하며 원본 캐시는 보존합니다. 원본 업데이트 때 이 훅을 유지하고 `node scripts/macos/prepareOpus.test.js`로 양 아키텍처 경로와 잘못된 바이너리 거부를 확인합니다.
