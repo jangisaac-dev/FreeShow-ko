@@ -1,6 +1,6 @@
 import fs from "fs"
 import path from "path"
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest"
+import { afterAll, beforeEach, describe, expect, it, vi } from "vitest"
 import { _store, createStores } from "../data/store"
 import { compressToZip, decompressZipStream } from "../data/zip"
 import { getDataFolderPath, writeFileAsync } from "../utils/files"
@@ -170,6 +170,10 @@ vi.mock("electron-store", () => {
     }
 })
 
+vi.mock("bonjour-service", () => ({
+    default: class MockBonjour {}
+}))
+
 // Mock IPC
 vi.mock("../IPC/main", () => {
     return {
@@ -270,10 +274,6 @@ vi.mock("./ChurchAppsSyncManager", () => {
 })
 
 describe("syncManager tests", () => {
-    beforeAll(() => {
-        createStores()
-    })
-
     async function createCloudState(files: { name: string; content: string }[], changesOverrides: any = {}) {
         const initialCreated: any = {}
         for (const file of files) {
@@ -297,6 +297,12 @@ describe("syncManager tests", () => {
     }
 
     beforeEach(() => {
+        h.currentMachineId = "test-device-id"
+        resetSyncManagerModule()
+        fs.rmSync(h.userDataDir, { recursive: true, force: true })
+        fs.mkdirSync(h.userDataDir, { recursive: true })
+        createStores()
+
         // clear tempDir
         if (fs.existsSync(h.tempDir)) {
             fs.rmSync(h.tempDir, { recursive: true, force: true })

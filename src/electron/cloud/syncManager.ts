@@ -326,6 +326,8 @@ export async function syncData(data: { id: SyncProviderId; churchId: string; tea
                 localMergedIn = true
                 if (!CHANGES.fileModified) CHANGES.fileModified = {}
                 CHANGES.fileModified[id] = Math.max(CHANGES.fileModified[id] || 0, localFileModified)
+            } else if (JSON.stringify(localStore.store) !== JSON.stringify(cloudFileData)) {
+                localMergedIn = true
             }
             return
         }
