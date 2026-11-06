@@ -102,6 +102,7 @@ git diff --stat origin/main...HEAD
     - `config/building/electron-builder.yaml`: 빌드를 FreeShow-ko 저장소에 초안으로 올립니다.
     - `scripts/fork/release-mac.sh`: 포크 배포 스크립트입니다.
     - `scripts/macos/notarize.js`: 키체인 프로필로 공증하고, 자격 증명이 없으면 공증을 건너뜁니다.
+    - `scripts/macos/prepareOpus.js`, `prepareOpus.test.js`와 빌드 설정의 `afterExtract`: 다중 아키텍처 캐시에서 Opus의 Electron용 바이너리가 빠지는 문제를 막습니다. 네이티브 재빌드 뒤 대상 아키텍처의 Node용 바이너리를 검증해 Electron 경로로 복사하며 원본 캐시는 보존합니다. 원본 업데이트 때 이 훅을 유지하고 `node scripts/macos/prepareOpus.test.js`로 양 아키텍처 경로와 잘못된 바이너리 거부를 확인합니다.
     - `src/frontend/utils/checkForUpdates.ts`, `src/frontend/components/main/popups/NewUpdate.svelte`, `UpdateManager.svelte`: 새 버전 확인과 다운로드 링크를 포크 저장소로 바꿨고, 자동 업데이트를 켜면 바로 확인을 시작합니다.
     - `.github/workflows/release.yml`, `winget.yml`: 원본 저장소에서만 돌게 막았습니다.
 - 원본 업데이트 때: 이 파일들에서 충돌이 나면 원본 변경을 받고 포크 쪽 줄(저장소 주소 `jangisaac-dev/FreeShow-ko`, `if: github.repository == 'ChurchApps/FreeShow'`)을 다시 넣습니다. 원본이 배포 워크플로를 새로 더했으면 같은 `if:` 줄을 넣습니다. 합친 뒤 아래 명령에 아무것도 나오지 않으면 원본 다운로드 주소가 새로 들어오지 않은 것입니다.
